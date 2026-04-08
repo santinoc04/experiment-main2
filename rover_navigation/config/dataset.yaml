@@ -1,0 +1,86 @@
+# Filename: dataset.yaml
+# Author: AK Wash
+# Created: 2026-03-10
+# Description: configuration describing the structure of the LiDAR datasets used
+# for training/evaluating the model
+
+# defines:
+# - dataset paths
+# - pcl feature structure
+# - label column indices
+# - param for sampling and preprocessing
+# - class definitions
+
+# each point contains: xyz coordinates, multiple scalar feature fields, and a binary label field
+dataset:
+  name: "cloudcompare_rover_dataset"
+
+paths:
+  raw_dir: "rover_navigation/data/raw"
+  processed_dir: "rover_navigation/data/processed"
+  # Scan input: file (csv/ply) or numpy arrays on disk — see scan_mode below.
+  # this is if using the ply:
+  # test_file: "rover_navigation/data/raw/pos1_2box.ply"
+  test_file: "rover_navigation/data/raw/BigObstacles_pos3_High.csv"
+  # scan_mode: file     -> use test_file (single csv/ply or directory of scans)
+  # scan_mode: numpy    -> use numpy_scan or numpy_scan_dir (.npy / .npz with xyz or points)
+  # scan_mode: function -> call paths.function_provider each cycle to get an (N,3) numpy array
+  scan_mode: function
+  # When test_file is a directory, which files to include (default: csv only for backward compat)
+  scan_glob: "*.csv"
+  # numpy_mode examples (set scan_mode: numpy):
+  # numpy_scan: "rover_navigation/data/raw/one_scan.npy"
+  # numpy_scan_dir: "rover_navigation/data/in_situ_scans"
+  # numpy_scan_glob: "*.npy"
+  numpy_scan: null
+  numpy_scan_dir: null
+  numpy_scan_glob: "*.npy"
+  # function_mode examples (set scan_mode: function):
+  function_provider: "rover_navigation.AIInterface:littlestupidfunction"
+  function_scan_cycles: 50
+  function_provider: null
+  function_scan_cycles: 1
+
+point_cloud:
+  # this is if using the ply:
+  # format: "ply"
+  # xyz_columns: [0, 1, 2]
+  # total_scalar_fields: 6
+  # label_scalar_index: 5
+  # feature_scalar_indices: [0, 1, 2, 3, 4]
+
+
+  #this is if using the .csv:
+  format: "csv"
+  has_header: true
+  xyz_columns: [8, 9, 10]
+  total_scalar_fields: 0
+  feature_scalar_indices: []
+  label_scalar_index: null
+
+classes:
+  0: "non_obstacle"
+  1: "obstacle"
+
+preprocessing:
+  center_cloud: true
+  normalize_xyz: true
+  normalize_features: false # true for ply, false for csv
+  num_points: 8192
+
+sampling:
+  k_n: 16
+  num_layers: 4
+  sub_sampling_ratio: [4, 4, 4, 4]
+  d_out: [16, 64, 128, 256]
+
+debug:
+  enabled: true
+  host: "127.0.0.1" # localhost ip address
+  port: 9876 # default port for JSON sender
+
+control:
+  goal_input_enabled: true
+  bind_host: "0.0.0.0"
+  bind_port: 9877 # operator -> Jetson UDP goal commands
+  poll_timeout_s: 0.001

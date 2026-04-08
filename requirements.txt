@@ -1,0 +1,8 @@
+numpy
+pyyaml
+scikit-learn
+pytest
+open3d
+torch
+torchvision
+torchaudio
