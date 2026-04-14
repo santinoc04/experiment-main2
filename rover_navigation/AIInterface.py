@@ -136,6 +136,11 @@ class AIInterface:
                 time.sleep(sleep)
             done = False
             i = i+1
+    def GetCurrentHeading(self) -> float:
+    
+        #Return controller-estimated rover heading in radians.
+    
+        return float(self._prevorientationAngle)
     def littlestupidfunction(path):
         return "work...please?"
     def IterateController(self,currentPositionX: float, currentPositionY: float, currentAng: float,goalPositionX: float,goalPositionY: float,RefreshError: bool, RoverisOrigin: bool, _guessispos):

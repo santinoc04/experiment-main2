@@ -414,8 +414,8 @@ def transform_local_to_world(
     sin_h = np.sin(heading_rad)
     world_from_body = np.array(
         [
-            [cos_h, -sin_h, 0.0],
-            [sin_h, cos_h, 0.0],
+            [cos_h, sin_h, 0.0],
+            [-sin_h, cos_h, 0.0],
             [0.0, 0.0, 1.0],
         ],
         dtype=np.float32,

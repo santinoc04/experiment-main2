@@ -39,7 +39,7 @@ from rover_navigation.control.goal_transport import UdpJsonGoalReceiver
 ROOT = Path(__file__).resolve().parent
 DATASET_CONFIG = ROOT / "config" / "dataset.yaml"
 
-
+# used for testing with csv files, not in situ use
 def load_file_scan_sequence(scan_input: str | Path, scan_glob: str = "*.csv") -> list[Path]:
     """
     Load a sequence of point-cloud files: single .csv / .ply or a directory of matches.
@@ -66,7 +66,7 @@ def load_file_scan_sequence(scan_input: str | Path, scan_glob: str = "*.csv") ->
         )
     return scans
 
-
+# not actually used
 def load_xyz_numpy_file(path: str | Path) -> np.ndarray:
     """
     Load (N, 3) xyz from ``.npy`` or ``.npz`` (keys ``xyz`` or ``points``).
@@ -130,7 +130,8 @@ def load_numpy_scan_sequence(paths_cfg: dict) -> list[tuple[np.ndarray, str]]:
         raise ValueError("No numpy scans found (check glob and directory).")
     return out
 
-
+# sets up to load the scans from the callable function provider
+# this is currently a dummy function, probably can delete
 def load_function_scan_provider(paths_cfg: dict) -> tuple[object, str, int]:
     """
     Load a callable provider that returns one XYZ scan array per call.
@@ -165,7 +166,7 @@ def load_function_scan_provider(paths_cfg: dict) -> tuple[object, str, int]:
 
     return provider, str(provider_ref), scan_cycles
 
-
+# decides how to load scans based on configuration settings
 def resolve_scans(dataset_cfg: dict) -> list[tuple[str, object, str]]:
     """
     Decide how to load scans from ``dataset_cfg['paths']``.
@@ -178,16 +179,16 @@ def resolve_scans(dataset_cfg: dict) -> list[tuple[str, object, str]]:
     paths_cfg = dataset_cfg["paths"] # config block for path
     mode = str(paths_cfg.get("scan_mode", "file")).lower() # mode for loading scans
 
-    if mode == "numpy":
+    if mode == "numpy": # load from numpy file (unused)
         return [
             ("numpy", xyz, label) for xyz, label in load_numpy_scan_sequence(paths_cfg)
         ]
 
-    if mode == "function":
+    if mode == "function": # load from the callable provider (dummy function)
         provider, provider_label, scan_cycles = load_function_scan_provider(paths_cfg)
         return [("function", provider, provider_label) for _ in range(scan_cycles)]
 
-    if mode == "file":
+    if mode == "file": # load from csv (testing use)
         scan_glob = str(paths_cfg.get("scan_glob", "*.csv"))
         test_file = paths_cfg.get("test_file")
         if not test_file:
@@ -199,7 +200,7 @@ def resolve_scans(dataset_cfg: dict) -> list[tuple[str, object, str]]:
         f"Unknown paths.scan_mode: {mode!r} (use 'file', 'numpy', or 'function')"
     )
 
-
+# combine the current scan occupancy map with global map
 def fuse_scan_into_global_map(
     global_map: OccupancyMap | None,
     scan_map: OccupancyMap,
@@ -225,7 +226,7 @@ def fuse_scan_into_global_map(
     global_map.set_map(fused_grid) # update global map with the fused result
     return global_map
 
-
+# simulation of rover motion
 def move_rover_along_path(
     path: list[tuple[int, int]],
     current_pos: tuple[int, int],
@@ -250,7 +251,7 @@ def move_rover_along_path(
     new_pos = moved_segment[-1] # last cell in moved segement is the new position
     return new_pos, moved_segment
 
-
+# built with cursor for debug use
 def build_debug_sender(dataset_cfg: dict) -> DebugSender | None:
     """
     Create optional debug sender from config.
@@ -271,14 +272,16 @@ def build_debug_sender(dataset_cfg: dict) -> DebugSender | None:
 
 
 def main() -> None:
+    AII = AIInterface.AIInterface() # intialize AI interface for control
+
     # load the dataset configuration
-    oI = OusterInterface.OusterInterface(False)
-    dataset_cfg = load_yaml(DATASET_CONFIG) 
-    debug_sender = build_debug_sender(dataset_cfg)
+    oI = OusterInterface.OusterInterface(False) # initalize Ouster interface for live scans
+    dataset_cfg = load_yaml(DATASET_CONFIG) # configuration of data
+    debug_sender = build_debug_sender(dataset_cfg) # sends debug visual to laptop
     scans = resolve_scans(dataset_cfg) # load scans based on settings
 
-    control_cfg = dataset_cfg.get("control", {})
-    goal_receiver = None
+    control_cfg = dataset_cfg.get("control", {}) # config block for control settings
+    goal_receiver = None # reciever for goal updates
     if bool(control_cfg.get("goal_input_enabled", False)):
         bind_host = str(control_cfg.get("bind_host", "0.0.0.0"))
         bind_port = int(control_cfg.get("bind_port", 9877))
@@ -300,11 +303,11 @@ def main() -> None:
     # NEED TO UPDATE FOR ACTUAL MAP
     # allowable range x: 0 to 4.4 m, 0 to <15 ft
     # allowable range y: 0 to 4.4 m, 0 to < 15 ft
-    rover_pose_xy = (0 * 0.3048, 5 * 0.3048)
-    goal_pose_xy = (2 * 0.3048, 0 * 0.3048)
+    rover_pose_xy = (0 * 0.3048, 0 * 0.3048)
+    goal_pose_xy = (2 * 0.3048, 13 * 0.3048)
 
     # inital rover state set after 1st scan
-    rover_heading = 0.0
+    rover_heading = AII.GetCurrentHeading() # update current heading
     steps_per_cycle = 3 # take 3 path steps before rescan
     persistent_map: OccupancyMap | None = None # global map for scan info
     current_grid_pos: tuple[int, int] | None = None # rover pos in (row, col)
@@ -314,6 +317,7 @@ def main() -> None:
 
     grid_info = None # store grid info from first scan
 
+    # this is where the points are actually loaded in from the scan
     for scan_idx, (scan_kind, scan_payload, scan_label) in enumerate(scans, start=1):
         print(f"\n[{scan_idx}/{len(scans)}] Processing scan: {scan_label}")
         if scan_kind == "file":
@@ -330,7 +334,9 @@ def main() -> None:
         else:
             raise RuntimeError(f"Unknown scan kind: {scan_kind}")
 
-        points_local = sensor_to_rover_local(points_sensor) # convert sensor cords to local frame
+
+        points_local = sensor_to_rover_local(points_sensor) # convert sensor cords to local frame (rover)
+        # transform local points to the world frame
         points_world = transform_local_to_world(
             points_local,
             rover_pose_xy,
@@ -355,27 +361,31 @@ def main() -> None:
         else:
             if scan_grid_info != grid_info:
                 raise ValueError("Grid info changed between scans; expected fixed grid geometry.")
+        
 
         persistent_map = fuse_scan_into_global_map(persistent_map, scan_map) # update global map with new scan
 
+        # prepare map for planning
         planning_map = OccupancyMap(
             x_dim=persistent_map.x_dim,
             y_dim=persistent_map.y_dim,
             movement_setting=persistent_map.movement_setting,
         )
+
         planning_map.set_map(persistent_map.get_map().copy()) # use fused map for planning
         planning_map.inflate(radius=1) # inflate obstacles (Safety margin)
+
         # visual
-        planning_grid = planning_map.get_map()
-        plt.figure(figsize=(8,6))
-        plt.imshow(planning_grid,cmap=("gray_r"))
-        plt.scatter(current_grid_pos[1],current_grid_pos[0], c="lime",s=120,label="Start")
-        plt.scatter(goal_grid_pos[1],goal_grid_pos[0], c="red", s = 120,label="Goal")
-        plt.title("Obstacle Grid Before Planning")
-        plt.gca().invert_yaxis()
-        plt.legend
-        plt.tight_layout()
-        plt.show()
+        # planning_grid = planning_map.get_map()
+        # plt.figure(figsize=(8,6))
+        # plt.imshow(planning_grid,cmap=("gray_r"))
+        # plt.scatter(current_grid_pos[1],current_grid_pos[0], c="lime",s=120,label="Start")
+        # plt.scatter(goal_grid_pos[1],goal_grid_pos[0], c="red", s = 120,label="Goal")
+        # plt.title("Obstacle Grid Before Planning")
+        # plt.gca().invert_yaxis()
+        # plt.legend
+        # plt.tight_layout()
+        # plt.show()
 
 
 
@@ -400,13 +410,14 @@ def main() -> None:
         planner = DStarLite(map=planning_map, s_start=current_grid_pos, s_goal=goal_grid_pos) # intialize path planner
         path, _g, _rhs = planner.move_and_replan(robot_position=current_grid_pos) # plan path
         pathmeters = []
-        for p in path:
-            p2 = tuple([p[0]*6/12*0.3048, p[1]*6/12*0.3048])
+        for row, col in path:
+            # Path comes in (row, col); convert using grid metadata for correct x/y.
+            p2 = grid_to_world(row, col, grid_info)
             pathmeters.append(p2)
         
-        AII = AIInterface.AIInterface()
-        pathmeters.insert(0,rover_pose_xy)
-        AII.FollowPath(pathmeters,0.2)
+        
+        pathmeters.insert(0,rover_pose_xy) # add current rover pos to start of path
+        AII.FollowPath(pathmeters,0.2) # send path to AI interface, speed 0.2 m/s
         final_path = path # store final path
 
         if debug_sender is not None:
@@ -420,6 +431,7 @@ def main() -> None:
                 goal_cell=goal_grid_pos,
             )
 
+        #simulate rover motion
         current_grid_pos, moved_segment = move_rover_along_path(
             path=path,
             current_pos=current_grid_pos,
@@ -431,11 +443,21 @@ def main() -> None:
             traveled_path.extend(moved_segment[1:])
 
         # keep rover pose and yaw consistent with simulated motion
-        rover_pose_xy, rover_heading = update_rover_pose_from_motion(
+        rover_pose_xy, _rover_heading_sim = update_rover_pose_from_motion(
             rover_pose_xy=rover_pose_xy,
             rover_heading=rover_heading,
             moved_segment=moved_segment,
             grid_info=grid_info,
+        )
+        # Keep heading aligned with motor/controller frame estimate (currentAng).
+        rover_heading = AII.GetCurrentHeading()
+
+        rover_heading = AII.GetCurrentHeading()
+
+        current_grid_pos = world_to_grid(
+            rover_pose_xy[0],
+            rover_pose_xy[1],
+            grid_info,
         )
 
         print(f"Planned path length: {len(path)}")

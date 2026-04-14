@@ -19,8 +19,8 @@ class OusterInterface:
 
 
     def __init__(self,debug: bool):
-        self.hostname = "os-122202003025"
-        self.hostname = "169.254.180.198"
+        self.hostname = "os-122202003025.local"
+        #self.hostname = "169.254.148.169"
         self.debug = debug
         self.config = core.SensorConfig()
         self.config.udp_profile_lidar = core.UDPProfileLidar.RNG19_RFL8_SIG16_NIR16 #find and change?
@@ -42,6 +42,7 @@ class OusterInterface:
                 destaggeredfield = core.data.destagger(metadata,scannedfield)
                 xyzlut = core.XYZLut(metadata)
                 xyz = xyzlut(destaggeredfield)
+                #xyz = np.array([xyz[1],xyz[0],xyz[2]])
                 print(self.debug)
                 if(self.debug):
                     reflectivity = core.destagger(stream.sensor_info[0],
@@ -56,6 +57,9 @@ class OusterInterface:
         cv2.destroyAllWindows()
 # oi = OusterInterface(True)
 # x = True
-# while x == True:
-#     oi.scan()
+# #while x == True:
+# xyz = oi.scan()
+# print(f"maxX: {np.max(xyz[0])} min x {np.min(xyz[0])} maxy: {np.max(xyz[1])} min y {np.min(xyz[1])} maxz: {np.max(xyz[2])} min 2 {np.min(xyz[2])}")
+# print(f"{xyz[:,0]}")
+# np.savetxt("xyz.csv", xyz, delimiter=",")
     
