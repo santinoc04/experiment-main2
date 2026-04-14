@@ -410,20 +410,30 @@ def transform_local_to_world(
     if local_points.ndim != 2 or local_points.shape[1] != 3:
         raise ValueError(f"Expected local_points shape (N, 3), got {local_points.shape}")
 
+    # cos_h = np.cos(heading_rad)
+    # sin_h = np.sin(heading_rad)
+    # world_from_body = np.array(
+    #     [
+    #         [cos_h, sin_h, 0.0],
+    #         [-sin_h, cos_h, 0.0],
+    #         [0.0, 0.0, 1.0],
+    #     ],
+    #     dtype=np.float32,
+    # )
+
+    # world_points = local_points @ world_from_body.T
+    # world_points[:, 0] += rover_pose_xy[0]
+    # world_points[:, 1] += rover_pose_xy[1]
     cos_h = np.cos(heading_rad)
     sin_h = np.sin(heading_rad)
-    world_from_body = np.array(
-        [
-            [cos_h, sin_h, 0.0],
-            [-sin_h, cos_h, 0.0],
-            [0.0, 0.0, 1.0],
-        ],
-        dtype=np.float32,
-    )
+    world_points = local_points.copy().astype(np.float32,copy=False)
+    xlocal = local_points[:,0]
+    ylocal = local_points[:,1]
+    world_points[:,0]=xlocal*cos_h+ylocal*sin_h
+    world_points[:,1] = -xlocal*sin_h+ylocal*cos_h
+    world_points[:,0]+=rover_pose_xy[0]
+    world_points[:,1]+=rover_pose_xy[1]
 
-    world_points = local_points @ world_from_body.T
-    world_points[:, 0] += rover_pose_xy[0]
-    world_points[:, 1] += rover_pose_xy[1]
     return world_points.astype(np.float32, copy=False)
 
 

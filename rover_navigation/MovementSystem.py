@@ -32,7 +32,7 @@ class MovementController:
 
         totalspeed = speed_dir_coords.GetMag() 
         turnAngle = speed_dir_coords.GetAngle(not reverse)
-        print(f"Movement System: Coords {speed_dir_coords.X} {speed_dir_coords.Y}, calcualtd Angle {turnAngle}")
+       # print(f"Movement System: Coords {speed_dir_coords.X} {speed_dir_coords.Y}, calcualtd Angle {turnAngle}")
         
         outputTurnAndMove = SonnyMath.Coordinates(0,0)
         outputTurnAndMove.X = totalspeed

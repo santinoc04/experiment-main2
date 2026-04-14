@@ -104,7 +104,7 @@ class AIInterface:
             gang = 0
         
         #limit angle between -pi/2 and pi/2
-        print(f"Guess function: pr mod gang: {gang} dtheta {dtheta}")
+      #  print(f"Guess function: pr mod gang: {gang} dtheta {dtheta}")
         intmod = math.floor(gang /(2*self.pi))
         gang = gang-intmod*2*self.pi
 
@@ -113,7 +113,7 @@ class AIInterface:
         if(gang < -self.pi):
             gang = gang+2*self.pi        
     
-        print(f"dt: {self._dt} dx {dx} dy {dy} x {x} y {y}")
+      #  print(f"dt: {self._dt} dx {dx} dy {dy} x {x} y {y}")
         return gpos, gang
     def _CalculateDt(self):
         t = time.time()
@@ -180,7 +180,7 @@ class AIInterface:
 
         errsign = errQuad.X
         erraut = errsign*self._errangPID.IterPID(errAngle,0.0)
-        print(f"Error Dist, Error Angle, Current angle {errDistance,errAngle,currentAng}")
+      #  print(f"Error Dist, Error Angle, Current angle {errDistance,errAngle,currentAng}")
         errdut = self._errdistPID.IterPID(0.0,errDistance)
 
 
@@ -199,7 +199,7 @@ class AIInterface:
             aut = 0
             done = True
 
-        print(f"erraut {erraut}, errdut {errdut}, aut {aut}, dut {dut}, distance {Distance}, Vector angle {VectorAngle}")
+      #  print(f"erraut {erraut}, errdut {errdut}, aut {aut}, dut {dut}, distance {Distance}, Vector angle {VectorAngle}")
 
         if(dut > self.normalizingDistance):
             dut = self.normalizingDistance
@@ -213,7 +213,8 @@ class AIInterface:
 
            ####################ROUND FOR NON PWM
         xvarperc = round(percdut)
-        yvarprc = round(percaut*2)/2
+        #yvarprc = round(percaut*2)/2# half turn
+        yvarprc = round(percaut)# no half turn
       #  print(f"Yvarperc {yvarprc}, percaut {percaut}")#autosave test
     ###################
         mag = xvarperc
@@ -227,26 +228,27 @@ class AIInterface:
         
         #turn into unit circle coordinate
         outputCoords: SonnyMath.Coordinates = SonnyMath.Coordinates(xvar,yvar)
-        print(f"output coords x {outputCoords.X}, Y {outputCoords.Y}")
+      #  print(f"output coords x {outputCoords.X}, Y {outputCoords.Y}")
         
         
         self._prevMotorandAngOutput = self.movementcontroller.ParseInput(outputCoords) #where it goes to the movement system
         print(f"Motor Output {self._prevMotorandAngOutput.X}, ang output {self._prevMotorandAngOutput.Y}")
-
+        print('-----------------------------------------')
         return done
         
     @staticmethod
     def _CalculateDeltas(goalPosition: SonnyMath.Coordinates,currentPosition:  SonnyMath.Coordinates):
         deltaVector:SonnyMath.Coordinates = SonnyMath.SonnyMath.SubtractCoords(goalPosition,currentPosition)
         distance = deltaVector.GetMag()
-        VectorAngle = deltaVector.GetAngle()
+        VectorAngle = deltaVector.GetAngle() #TODO make this angle on range from 360
         Quad: SonnyMath.Coordinates = SonnyMath.Coordinates(1,1)
-        if(deltaVector.X < 0):
-            Quad.X = Quad.X*-1
-        if(deltaVector.Y < 0):
-            Quad.Y = Quad.Y*-1
+        # if(deltaVector.X < 0):
+        #     Quad.X = Quad.X*-1
+        # if(deltaVector.Y < 0):
+        #     Quad.Y = Quad.Y*-1
+        print(f"dVector: X: {deltaVector.X} Y: {deltaVector.Y}")
         print(f"Quadx: {Quad.X} Quady: {Quad.Y}")
        # if((Quad.X == -1 and Quad.Y==1) or (Quad.X == 1 and Quad.Y==-1)):
-        VectorAngle = -Quad.X*VectorAngle
+        #VectorAngle = -Quad.X*VectorAngle
         
         return distance, VectorAngle, Quad
