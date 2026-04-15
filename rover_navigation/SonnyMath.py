@@ -45,4 +45,11 @@ class SonnyMath:
     def Integrate(data: list[float],dt):
          ddt = (data[len(data)-1] - data[len(data)-2])/dt
          return ddt
+    def limitAngle(angle):
+        pi = 3.1415
+        if(angle > pi):
+            angle = angle-2*pi
+        if(angle < -pi):
+            angle = angle+2*pi 
+        return angle    
     

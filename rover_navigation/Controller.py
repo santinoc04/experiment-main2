@@ -1,7 +1,7 @@
 import pygame
-import SonnyMath
-from SonnyMath import Coordinates
-import MovementSystem
+import rover_navigation.SonnyMath as SonnyMath
+from rover_navigation.SonnyMath import Coordinates
+import rover_navigation.MovementSystem as MovementSystem
 
 
 # Initialize pygame and the joystick module

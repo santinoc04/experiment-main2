@@ -303,7 +303,7 @@ def main() -> None:
     # NEED TO UPDATE FOR ACTUAL MAP
     # allowable range x: 0 to 4.4 m, 0 to <15 ft
     # allowable range y: 0 to 4.4 m, 0 to < 15 ft
-    rover_pose_xy = (5 * 0.3048, 5 * 0.3048)
+    rover_pose_xy = (0 * 0.3048, 5 * 0.3048)
     goal_pose_xy = (2 * 0.3048, 2 * 0.3048)
 
     # inital rover state set after 1st scan
@@ -329,7 +329,7 @@ def main() -> None:
         elif scan_kind == "function":
             # First-pass operator interface for live in-memory scans:
             # provider callable returns one (N,3) xyz array per planning cycle.
-            xyz = oI.scan()
+            xyz = oI.denseScan()
             points_sensor, _true_labels, pred_labels = run_inference_from_xyz(xyz)
         else:
             raise RuntimeError(f"Unknown scan kind: {scan_kind}")

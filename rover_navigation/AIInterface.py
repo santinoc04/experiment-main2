@@ -33,9 +33,9 @@ class AIInterface:
 
 
 
-    normalizingDistance = 0.3 # in meters. Anything greater than this distance will warrant the maximum speed for traversal
+    normalizingDistance = 0.0254 # in meters. Anything greater than this distance will warrant the maximum speed for traversal
     normalizingAngle = pi/8 # in radians. Anything greater than this angle will warrant the maximum speed for angular change
-    distTolerance = 0.3 #distance at which it wont rotate or move forward anymore
+    distTolerance = 0.0254 #distance at which it wont rotate or move forward anymore
 
  
  
@@ -61,7 +61,7 @@ class AIInterface:
         angvel = angPerc*self.MaxTurnAngSpeed
        # if(self._prevMotorandAngOutput.Y > )
         vel = self._prevMotorandAngOutput.X*self.MaxSpeed
-
+        print(f"Vel ----- {vel}")
         dx = 0
         dy = 0
         theta =0
@@ -108,10 +108,7 @@ class AIInterface:
         intmod = math.floor(gang /(2*self.pi))
         gang = gang-intmod*2*self.pi
 
-        if(gang > self.pi):
-            gang = gang-2*self.pi
-        if(gang < -self.pi):
-            gang = gang+2*self.pi        
+        gang = SonnyMath.SonnyMath.limitAngle(gang)     
     
       #  print(f"dt: {self._dt} dx {dx} dy {dy} x {x} y {y}")
         return gpos, gang
@@ -244,6 +241,7 @@ class AIInterface:
         Quad: SonnyMath.Coordinates = SonnyMath.Coordinates(1,1)
         if(deltaVector.X > 0):
             VectorAngle = -VectorAngle
+        VectorAngle = SonnyMath.SonnyMath.limitAngle(VectorAngle)
         #     Quad.X = Quad.X*-1
         # if(deltaVector.Y < 0):
         #     Quad.Y = Quad.Y*-1
