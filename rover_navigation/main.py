@@ -376,16 +376,16 @@ def main() -> None:
         planning_map.inflate(radius=1) # inflate obstacles (Safety margin)
 
         # visual
-        # planning_grid = planning_map.get_map()
-        # plt.figure(figsize=(8,6))
-        # plt.imshow(planning_grid,cmap=("gray_r"))
-        # plt.scatter(current_grid_pos[1],current_grid_pos[0], c="lime",s=120,label="Start")
-        # plt.scatter(goal_grid_pos[1],goal_grid_pos[0], c="red", s = 120,label="Goal")
-        # plt.title("Obstacle Grid Before Planning")
-        # plt.gca().invert_yaxis()
-        # plt.legend
-        # plt.tight_layout()
-        # plt.show()
+        planning_grid = planning_map.get_map()
+        plt.figure(figsize=(8,6))
+        plt.imshow(planning_grid,cmap=("gray_r"))
+        plt.scatter(current_grid_pos[1],current_grid_pos[0], c="lime",s=120,label="Start")
+        plt.scatter(goal_grid_pos[1],goal_grid_pos[0], c="red", s = 120,label="Goal")
+        plt.title("Obstacle Grid Before Planning")
+        plt.gca().invert_yaxis()
+        plt.legend
+        plt.tight_layout()
+        plt.show(block = False)
 
 
 
@@ -497,7 +497,7 @@ def main() -> None:
     plt.gca().invert_yaxis()
     plt.legend()
     plt.tight_layout()
-    plt.show()
+    plt.show(block = False)
 
     print("\nNavigation Complete.")
     print(f"Final path length: {len(final_path)}")
