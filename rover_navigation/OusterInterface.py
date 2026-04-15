@@ -52,13 +52,23 @@ class OusterInterface:
                     key = cv2.waitKey(1) & 0xFF
                 xyz = xyz.reshape(-1, 3)*1/1000
                 return xyz
-            
+
+    def denseScan(self,num = 10):
+        all_points = []
+
+        for i in range(num):  # accumulate 20 frames
+            xyz = self.scan()  # this already includes destaggering
+            all_points.append(xyz)
+
+        dense_cloud = np.vstack(all_points)
+        return dense_cloud
+
     def closedug(self):
         cv2.destroyAllWindows()
 oi = OusterInterface(True)
 x = True
 #while x == True:
-xyz = oi.scan()
+xyz = oi.denseScan()
 print(f"maxX: {np.max(xyz[0])} min x {np.min(xyz[0])} maxy: {np.max(xyz[1])} min y {np.min(xyz[1])} maxz: {np.max(xyz[2])} min 2 {np.min(xyz[2])}")
 print(f"{xyz[:,0]}")
 np.savetxt("xyz.csv", xyz, delimiter=",", header="X1(mm),Y1(mm),Z1(mm)")
