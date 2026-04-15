@@ -55,11 +55,11 @@ class OusterInterface:
             
     def closedug(self):
         cv2.destroyAllWindows()
-# oi = OusterInterface(True)
-# x = True
-# #while x == True:
-# xyz = oi.scan()
-# print(f"maxX: {np.max(xyz[0])} min x {np.min(xyz[0])} maxy: {np.max(xyz[1])} min y {np.min(xyz[1])} maxz: {np.max(xyz[2])} min 2 {np.min(xyz[2])}")
-# print(f"{xyz[:,0]}")
-# np.savetxt("xyz.csv", xyz, delimiter=",")
+oi = OusterInterface(True)
+x = True
+#while x == True:
+xyz = oi.scan()
+print(f"maxX: {np.max(xyz[0])} min x {np.min(xyz[0])} maxy: {np.max(xyz[1])} min y {np.min(xyz[1])} maxz: {np.max(xyz[2])} min 2 {np.min(xyz[2])}")
+print(f"{xyz[:,0]}")
+np.savetxt("xyz.csv", xyz, delimiter=",")
     

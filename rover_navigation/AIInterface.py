@@ -242,7 +242,8 @@ class AIInterface:
         distance = deltaVector.GetMag()
         VectorAngle = deltaVector.GetAngle() #TODO make this angle on range from 360
         Quad: SonnyMath.Coordinates = SonnyMath.Coordinates(1,1)
-        # if(deltaVector.X < 0):
+        if(deltaVector.X > 0):
+            VectorAngle = -VectorAngle
         #     Quad.X = Quad.X*-1
         # if(deltaVector.Y < 0):
         #     Quad.Y = Quad.Y*-1

@@ -303,8 +303,8 @@ def main() -> None:
     # NEED TO UPDATE FOR ACTUAL MAP
     # allowable range x: 0 to 4.4 m, 0 to <15 ft
     # allowable range y: 0 to 4.4 m, 0 to < 15 ft
-    rover_pose_xy = (0 * 0.3048, 0 * 0.3048)
-    goal_pose_xy = (2 * 0.3048, 13 * 0.3048)
+    rover_pose_xy = (5 * 0.3048, 5 * 0.3048)
+    goal_pose_xy = (2 * 0.3048, 2 * 0.3048)
 
     # inital rover state set after 1st scan
     rover_heading = AII.GetCurrentHeading() # update current heading
