@@ -51,6 +51,15 @@ class OusterInterface:
                     cv2.imshow("scaled reflectivity", reflectivity)
                     key = cv2.waitKey(1) & 0xFF
                 xyz = xyz.reshape(-1, 3)
+
+                Rz_90 = np.array([
+                    [0, -1, 0],
+                    [1,  0, 0],
+                    [0,  0, 1]
+                ])
+
+                xyz = xyz @ Rz_90.T
+
                 return xyz
 
     def denseScan(self,num = 10):
