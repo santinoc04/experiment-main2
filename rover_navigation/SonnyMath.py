@@ -20,6 +20,10 @@ class Coordinates:
             theta = SonnyMath.GetAngle(self,refvector)
             #print(f'{theta*180/3.1415} {sign}')
             return float(theta)
+        def RotateByAngle(self,angle):
+             xn = self.X*math.sin(angle)-self.Y*math.sin(angle)
+             yn = self.X*math.sin(angle)+self.Y*math.cos(angle)
+             return Coordinates(xn,yn)
         
 class SonnyMath:
     def __init__(self):

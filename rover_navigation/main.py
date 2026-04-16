@@ -303,8 +303,8 @@ def main() -> None:
     # NEED TO UPDATE FOR ACTUAL MAP
     # allowable range x: 0 to 4.4 m, 0 to <15 ft
     # allowable range y: 0 to 4.4 m, 0 to < 15 ft
-    rover_pose_xy = (0 * 0.3048, 5 * 0.3048)
-    goal_pose_xy = (2 * 0.3048, 2 * 0.3048)
+    rover_pose_xy = (7 * 0.3048, 0 * 0.3048)
+    goal_pose_xy = (5 * 0.3048, 2 * 0.3048)
 
     # inital rover state set after 1st scan
     rover_heading = AII.GetCurrentHeading() # update current heading
@@ -376,16 +376,16 @@ def main() -> None:
         planning_map.inflate(radius=1) # inflate obstacles (Safety margin)
 
         # visual
-        planning_grid = planning_map.get_map()
-        plt.figure(figsize=(8,6))
-        plt.imshow(planning_grid,cmap=("gray_r"))
-        plt.scatter(current_grid_pos[1],current_grid_pos[0], c="lime",s=120,label="Start")
-        plt.scatter(goal_grid_pos[1],goal_grid_pos[0], c="red", s = 120,label="Goal")
-        plt.title("Obstacle Grid Before Planning")
-        plt.gca().invert_yaxis()
-        plt.legend
-        plt.tight_layout()
-        plt.show(block = False)
+        # planning_grid = planning_map.get_map()
+        # plt.figure(figsize=(8,6))
+        # plt.imshow(planning_grid,cmap=("gray_r"))
+        # plt.scatter(current_grid_pos[1],current_grid_pos[0], c="lime",s=120,label="Start")
+        # plt.scatter(goal_grid_pos[1],goal_grid_pos[0], c="red", s = 120,label="Goal")
+        # plt.title("Obstacle Grid Before Planning")
+        # plt.gca().invert_yaxis()
+        # plt.legend
+        # plt.tight_layout()
+        # plt.show()
 
 
 
@@ -497,7 +497,7 @@ def main() -> None:
     plt.gca().invert_yaxis()
     plt.legend()
     plt.tight_layout()
-    plt.show(block = False)
+    plt.show()
 
     print("\nNavigation Complete.")
     print(f"Final path length: {len(final_path)}")

@@ -71,7 +71,7 @@ class AIInterface:
 
         dtheta = angvel*self._dt
         if(RoverisOrigin):
-            R, Angle, Vec = self._CalculateDeltas(self._goalCoords,self._currentCoords)
+            R, Angle, Vec,dumvec = self._CalculateDeltas(self._goalCoords,self._currentCoords)
             nAngle = dtheta+Angle
             dy2 = R*math.cos(-nAngle)-R*math.cos(-Angle)
             dx2 = R*math.sin(-nAngle)-R*math.sin(-Angle)
@@ -172,7 +172,7 @@ class AIInterface:
         self._goalCoords = givenGoalCoords
         print(f"x:{self._currentCoords.X} y:{self._currentCoords.Y} ang: {currentAng}, Xg: {self._goalCoords.X}, Yg: {self._goalCoords.Y}")
 # for error
-        errDistance, errVecAngle, errQuad = self._CalculateDeltas(gpos,self._currentCoords)
+        errDistance, errVecAngle, errQuad,errdvec = self._CalculateDeltas(gpos,self._currentCoords)
         errAngle = errVecAngle-self._prevorientationAngle
 
         errsign = errQuad.X
@@ -182,21 +182,30 @@ class AIInterface:
 
 
 #for goal position
-        Distance, VectorAngle, Quad = self._CalculateDeltas(self._goalCoords,self._currentCoords)
+        Distance, VectorAngle, Quad, deltaVector = self._CalculateDeltas(self._goalCoords,self._currentCoords)
 
-       # Angle = VectorAngle - self._prevorientationAngle
+        gVectorRot = deltaVector.RotateByAngle(-currentAng)
+
+        newVectorAngle = gVectorRot.GetAngle()
+        if(gVectorRot.X>0):
+            newVectorAngle = -newVectorAngle
+        DAngle = VectorAngle - currentAng
+        DAngle = SonnyMath.SonnyMath.limitAngle(DAngle)
        # sign = Quad.X
 
-        aut = self._angPID.IterPID(currentAng,VectorAngle)+erraut
+        #aut = self._angPID.IterPID(currentAng,VectorAngle)+erraut
+        aut = -self._angPID.IterPID(DAngle,0)#+erraut#this version keeps the current angle as 0
+       #negative because we're switching D angle and 0 so that the error doesn't build up from current angle not updating
+       
        # aut = VectorAngle - currentAng+erraut
-        print(f" Dist,  Angle, Current angle {Distance,VectorAngle,currentAng}")
+        print(f" Dist,  Angle, Current angle Dangle{Distance,VectorAngle,currentAng,DAngle}")
         dut = self._distPID.IterPID(0,Distance)+errdut
         if Distance < self.distTolerance:
             dut = 0
             aut = 0
             done = True
 
-      #  print(f"erraut {erraut}, errdut {errdut}, aut {aut}, dut {dut}, distance {Distance}, Vector angle {VectorAngle}")
+        print(f"erraut {erraut}, errdut {errdut}, aut {aut}, dut {dut}, distance {Distance}, Vector angle {VectorAngle}")
 
         if(dut > self.normalizingDistance):
             dut = self.normalizingDistance
@@ -250,4 +259,4 @@ class AIInterface:
        # if((Quad.X == -1 and Quad.Y==1) or (Quad.X == 1 and Quad.Y==-1)):
         #VectorAngle = -Quad.X*VectorAngle
         
-        return distance, VectorAngle, Quad
+        return distance, VectorAngle, Quad, deltaVector

@@ -294,7 +294,6 @@ def run_inference(
     batch, _sampled_idx, vis_points = build_inference_batch(ply_path)
     return _run_inference_from_batch(batch, vis_points, model_path)
 
-
 def run_inference_from_xyz(
     points_xyz: np.ndarray,
     features: np.ndarray | None = None,
@@ -307,12 +306,36 @@ def run_inference_from_xyz(
     Same preprocessing and model as :func:`run_inference`, without reading a file.
     Optional ``features`` is (N, F); if omitted, empty features (N, 0) are used like CSV loads.
     """
+    points_xyz = np.asarray(points_xyz, dtype=np.float32)
+    min_keep_radius_m = 0 * 0.0254  # 8 inches in meters
+    xy_dist = np.linalg.norm(points_xyz[:, :2], axis=1)  # XY-only distance (ignore Z)
+    keep_mask = xy_dist > min_keep_radius_m
+    filtered_points_xyz = points_xyz[keep_mask]
+    filtered_features = None if features is None else np.asarray(features)[keep_mask]
     batch, _sampled_idx, vis_points = build_inference_batch_from_xyz(
-        points_xyz,
-        features=features,
+        filtered_points_xyz,
+        features=filtered_features,
         dataset_config_path=dataset_config_path,
     )
     return _run_inference_from_batch(batch, vis_points, model_path)
+# def run_inference_from_xyz(
+#     points_xyz: np.ndarray,
+#     features: np.ndarray | None = None,
+#     model_path: str | Path = Path("checkpoints") / "randlanet.pt",
+#     dataset_config_path: str | Path = DATASET_CONFIG,
+# ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+#     """
+#     Run semantic segmentation on an in-memory point cloud (N, 3) XYZ.
+
+#     Same preprocessing and model as :func:`run_inference`, without reading a file.
+#     Optional ``features`` is (N, F); if omitted, empty features (N, 0) are used like CSV loads.
+#     """
+#     batch, _sampled_idx, vis_points = build_inference_batch_from_xyz(
+#         points_xyz,
+#         features=features,
+#         dataset_config_path=dataset_config_path,
+#     )
+#     return _run_inference_from_batch(batch, vis_points, model_path)
 
 
 # helper function to create a colored Open3D point cloud
