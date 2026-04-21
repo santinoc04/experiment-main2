@@ -61,7 +61,7 @@ class AIInterface:
         angvel = angPerc*self.MaxTurnAngSpeed
        # if(self._prevMotorandAngOutput.Y > )
         vel = self._prevMotorandAngOutput.X*self.MaxSpeed
-        print(f"Vel ----- {vel}")
+     #   print(f"Vel ----- {vel}")
         dx = 0
         dy = 0
         theta =0
@@ -170,7 +170,7 @@ class AIInterface:
         self._currentCoords = givenCurrentPos
         self._prevorientationAngle = currentAng
         self._goalCoords = givenGoalCoords
-        print(f"x:{self._currentCoords.X} y:{self._currentCoords.Y} ang: {currentAng}, Xg: {self._goalCoords.X}, Yg: {self._goalCoords.Y}")
+     #   print(f"x:{self._currentCoords.X} y:{self._currentCoords.Y} ang: {currentAng}, Xg: {self._goalCoords.X}, Yg: {self._goalCoords.Y}")
 # for error
         errDistance, errVecAngle, errQuad,errdvec = self._CalculateDeltas(gpos,self._currentCoords)
         errAngle = errVecAngle-self._prevorientationAngle
@@ -198,14 +198,14 @@ class AIInterface:
        #negative because we're switching D angle and 0 so that the error doesn't build up from current angle not updating
        
        # aut = VectorAngle - currentAng+erraut
-        print(f" Dist,  Angle, Current angle Dangle{Distance,VectorAngle,currentAng,DAngle}")
+    #    print(f" Dist,  Angle, Current angle Dangle{Distance,VectorAngle,currentAng,DAngle}")
         dut = self._distPID.IterPID(0,Distance)+errdut
         if Distance < self.distTolerance:
             dut = 0
             aut = 0
             done = True
 
-        print(f"erraut {erraut}, errdut {errdut}, aut {aut}, dut {dut}, distance {Distance}, Vector angle {VectorAngle}")
+     #   print(f"erraut {erraut}, errdut {errdut}, aut {aut}, dut {dut}, distance {Distance}, Vector angle {VectorAngle}")
 
         if(dut > self.normalizingDistance):
             dut = self.normalizingDistance
@@ -238,8 +238,8 @@ class AIInterface:
         
         
         self._prevMotorandAngOutput = self.movementcontroller.ParseInput(outputCoords) #where it goes to the movement system
-        print(f"Motor Output {self._prevMotorandAngOutput.X}, ang output {self._prevMotorandAngOutput.Y}")
-        print('-----------------------------------------')
+    #    print(f"Motor Output {self._prevMotorandAngOutput.X}, ang output {self._prevMotorandAngOutput.Y}")
+    #    print('-----------------------------------------')
         return done
         
     @staticmethod
@@ -254,8 +254,8 @@ class AIInterface:
         #     Quad.X = Quad.X*-1
         # if(deltaVector.Y < 0):
         #     Quad.Y = Quad.Y*-1
-        print(f"dVector: X: {deltaVector.X} Y: {deltaVector.Y}")
-        print(f"Quadx: {Quad.X} Quady: {Quad.Y}")
+      #  print(f"dVector: X: {deltaVector.X} Y: {deltaVector.Y}")
+     #   print(f"Quadx: {Quad.X} Quady: {Quad.Y}")
        # if((Quad.X == -1 and Quad.Y==1) or (Quad.X == 1 and Quad.Y==-1)):
         #VectorAngle = -Quad.X*VectorAngle
         

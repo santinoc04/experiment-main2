@@ -53,6 +53,8 @@ class DStarLite:
         """
         if not self.sensed_map.is_unoccupied(u) or not self.sensed_map.is_unoccupied(v):
             return float("inf")
+        if not self.sensed_map.is_edge_free(u,v):
+            return float("inf")
         return heuristic(u, v)
 
     def contain(self, u: tuple[int, int]) -> bool:
@@ -79,7 +81,7 @@ class DStarLite:
                 self.g[u] = self.rhs[u]
                 self.U.remove(u)
 
-                pred = self.sensed_map.successors(vertex=u, avoid_obstacles=False)
+                pred = self.sensed_map.successors(vertex=u, avoid_obstacles=True)
                 for s in pred:
                     if s != self.s_goal:
                         self.rhs[s] = min(self.rhs[s], self.c(s, u) + self.g[u])
@@ -89,14 +91,14 @@ class DStarLite:
                 g_old = self.g[u]
                 self.g[u] = float("inf")
 
-                pred = self.sensed_map.successors(vertex=u, avoid_obstacles=False)
+                pred = self.sensed_map.successors(vertex=u, avoid_obstacles=True)
                 pred.append(u)
 
                 for s in pred:
                     if self.rhs[s] == self.c(s, u) + g_old:
                         if s != self.s_goal:
                             min_s = float("inf")
-                            succ = self.sensed_map.successors(vertex=s, avoid_obstacles=False)
+                            succ = self.sensed_map.successors(vertex=s, avoid_obstacles=True)
                             for s_ in succ:
                                 temp = self.c(s, s_) + self.g[s_]
                                 if min_s > temp:
@@ -166,7 +168,7 @@ class DStarLite:
                         elif self.rhs[u] == c_old + self.g[v]:
                             if u != self.s_goal:
                                 min_cost = float("inf")
-                                succ_u = self.sensed_map.successors(vertex=u, avoid_obstacles=False)
+                                succ_u = self.sensed_map.successors(vertex=u, avoid_obstacles=True)
                                 for s_ in succ_u:
                                     temp = self.c(u, s_) + self.g[s_]
                                     if min_cost > temp:

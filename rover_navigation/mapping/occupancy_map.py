@@ -84,7 +84,7 @@ class OccupancyMap:
     
     vertex = tuple[int, int]
 
-    def successors(self, vertex, avoid_obstacles: bool = False) -> list:
+    def successors(self, vertex, avoid_obstacles: bool = True) -> list:
         """
         get the successors of a cell (sucessors are neighbors cells that can be reached)
         :param vertex: cell to find successors for 
@@ -92,19 +92,67 @@ class OccupancyMap:
         :return: list of successors
         """
         (x,y) = vertex
+        # (row,col) = vertex
 
         if self.movement_setting == '4N':
             # move up, down, left, right
             movements = get_movements_4n(x =x, y=y)
+            # movements = get_movements_4n(x = row, y=col)
         else: 
             movements = get_movements_8n(x=x, y=y)
             # move up, down, left, right, and diagonals
+        valid = []
 
-        if (x+y) % 2 == 0: movements.reverse() 
+        for nx, ny in movements:
+            if self.in_bounds((nx,ny)):
+                continue
+            if avoid_obstacles and not self.is_unoccupied((nx,ny)):
+                continue
 
-        filtered_movements = self.filter(neighbors = movements, avoid_obstacles=avoid_obstacles) # filter out movements that cause out of bounds and occupied cells
-        return list(filtered_movements)
+            if self.movement_setting=='8N':
+                dx = nx - x
+                dy = ny - y
+                if abs(dx)==1 and abs(dy)==1:
+                    if not self.is_unoccupied((x+dx,y)) or not self.is_unoccupied((x,y+dy)):
+                        continue
+            valid.append((nx,ny))
+        return valid
     
+    def is_edge_free(self,u:tuple[int,int],v:tuple[int,int])->bool:
+        (x0,y0) = u
+        (x1,y1) = v
+
+        dx = abs(x1-x0)
+        dy = abs(y1-y0)
+
+        x,y = x0,y0
+
+        sx=1 if x1 > x0 else -1
+        sy = 1 if y1 > y0 else -1
+        
+        if dx > dy:
+            err = dx/2.0
+            while x != x1:
+                if not self.in_bounds((x,y)) or not self.is_unoccupied((x,y)):
+                    return False
+                err -= dy
+                if err <0:
+                    y+=sy
+                    err+=dx
+                x+=sx
+
+        else:
+            err = dy / 2.0
+            while y != y1:
+                if not self.in_bounds((x,y)) or not self.is_unoccupied((x,y)):
+                    return False
+                err -= dx
+                if err <0:
+                    x+=sx
+                    err+=dy
+                y+=sy
+        return True
+                     
     def set_obstacles(self, pos):
         """
         :param pos: cell position to set as an obstacle (x,y)
@@ -122,6 +170,8 @@ class OccupancyMap:
         """
         (x,y) = round(pos[0]), round(pos[1]) # round to nearest match
         (row, col) = (y,x)
+
+        # (row, col)= round(pos[0],pos[1])
 
         self.occupancy_map[row][col] = UNOCCUPIED # set cell as unoccupied
 
@@ -189,8 +239,10 @@ class SLAM:
 
         if not self.slam_map.is_unoccupied(u) or not self.slam_map.is_unoccupied(v):
             return float('inf') # if either node is occupied, cost is infinite
-        else: 
-            return heuristic(u,v) # otherwise, cost is heuristic distance
+        if not self.slam_map.is_edge_free(u,v):
+            return float('inf')
+        
+        return heuristic(u,v) # otherwise, cost is heuristic distance
         
     global_pos = tuple[int, int]
 
