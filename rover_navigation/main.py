@@ -362,8 +362,8 @@ def main() -> None:
         # intialize grid info and positions
         if grid_info is None:
             grid_info = scan_grid_info
-            current_grid_pos = world_to_grid(rover_pose_xy[1], rover_pose_xy[0], grid_info) # convert rover world pos to grid pos
-            goal_grid_pos = world_to_grid(goal_pose_xy[1], goal_pose_xy[0], grid_info) # convert goal world pos to grid pos
+            current_grid_pos = world_to_grid(rover_pose_xy[0], rover_pose_xy[1], grid_info) # convert rover world pos to grid pos
+            goal_grid_pos = world_to_grid(goal_pose_xy[0], goal_pose_xy[1], grid_info) # convert goal world pos to grid pos
             print(f"Start (grid): {current_grid_pos}")
             print(f"Goal  (grid): {goal_grid_pos}")
         else:
@@ -381,7 +381,7 @@ def main() -> None:
         )
 
         planning_map.set_map(persistent_map.get_map().copy()) # use fused map for planning
-        planning_map.inflate(radius=2) # inflate obstacles (Safety margin)
+        planning_map.inflate(radius=1) # inflate obstacles (Safety margin)
 
         # visual
         planning_grid = planning_map.get_map()
