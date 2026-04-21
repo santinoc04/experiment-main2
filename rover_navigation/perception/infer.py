@@ -307,9 +307,12 @@ def run_inference_from_xyz(
     Optional ``features`` is (N, F); if omitted, empty features (N, 0) are used like CSV loads.
     """
     points_xyz = np.asarray(points_xyz, dtype=np.float32)
-    min_keep_radius_m = 8 * 0.0254  # 8 inches in meters
-    xy_dist = np.linalg.norm(points_xyz[:, :2], axis=1)  # XY-only distance (ignore Z)
-    keep_mask = xy_dist > min_keep_radius_m
+    min_keep_height_m = 0 * 0.0254  # 8 inches in meters
+    
+    z_dist = np.abs(points_xyz[:,2])
+
+    keep_mask = z_dist > min_keep_height_m
+
     filtered_points_xyz = points_xyz[keep_mask]
     filtered_features = None if features is None else np.asarray(features)[keep_mask]
     batch, _sampled_idx, vis_points = build_inference_batch_from_xyz(

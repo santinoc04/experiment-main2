@@ -84,7 +84,7 @@ class OccupancyMap:
     
     vertex = tuple[int, int]
 
-    def successors(self, vertex, avoid_obstacles: bool = True) -> list:
+    def successors(self, vertex, avoid_obstacles: bool = False) -> list:
         """
         get the successors of a cell (sucessors are neighbors cells that can be reached)
         :param vertex: cell to find successors for 
@@ -101,22 +101,14 @@ class OccupancyMap:
         else: 
             movements = get_movements_8n(x=x, y=y)
             # move up, down, left, right, and diagonals
-        valid = []
 
-        for nx, ny in movements:
-            if self.in_bounds((nx,ny)):
-                continue
-            if avoid_obstacles and not self.is_unoccupied((nx,ny)):
-                continue
+        if (x+y) % 2 == 0: 
+            movements.reverse()
+        # if (row + col) % 2 ==0:
+        #     movements.reverse()
 
-            if self.movement_setting=='8N':
-                dx = nx - x
-                dy = ny - y
-                if abs(dx)==1 and abs(dy)==1:
-                    if not self.is_unoccupied((x+dx,y)) or not self.is_unoccupied((x,y+dy)):
-                        continue
-            valid.append((nx,ny))
-        return valid
+        filtered_movements = self.filter(neighbors = movements, avoid_obstacles=avoid_obstacles) # filter out movements that cause out of bounds and occupied cells
+        return list(filtered_movements)
     
     def is_edge_free(self,u:tuple[int,int],v:tuple[int,int])->bool:
         (x0,y0) = u
@@ -188,7 +180,7 @@ class OccupancyMap:
                  if self.in_bounds((x, y))]
 
         return {node: UNOCCUPIED if self.is_unoccupied(pos=node) else OBSTACLE for node in nodes}
-    def inflate(self, radius: int = 1):
+    def inflate(self, radius: int = 2):
         """
         Inflate obstacles to account for rover size / safety margin
         :param radius: number of grid cells to expand obstacles
@@ -239,10 +231,8 @@ class SLAM:
 
         if not self.slam_map.is_unoccupied(u) or not self.slam_map.is_unoccupied(v):
             return float('inf') # if either node is occupied, cost is infinite
-        if not self.slam_map.is_edge_free(u,v):
-            return float('inf')
-        
-        return heuristic(u,v) # otherwise, cost is heuristic distance
+        else: 
+            return heuristic(u,v) # otherwise, cost is heuristic distance
         
     global_pos = tuple[int, int]
 

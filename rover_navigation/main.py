@@ -381,7 +381,7 @@ def main() -> None:
         )
 
         planning_map.set_map(persistent_map.get_map().copy()) # use fused map for planning
-        planning_map.inflate(radius=1) # inflate obstacles (Safety margin)
+        planning_map.inflate(radius=2) # inflate obstacles (Safety margin)
 
         # visual
         planning_grid = planning_map.get_map()
@@ -479,7 +479,7 @@ def main() -> None:
     if persistent_map is None:
         raise RuntimeError("No scans were processed.")
 
-    grid = persistent_map.get_map()
+    grid = planning_map.get_map()
 
     # Visualize occupancy map and path history
     print("\nVisualizing results...")

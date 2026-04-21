@@ -29,11 +29,12 @@ class AIInterface:
     #WhelAngVel = TurnFreq*2*pi
     WhelAngVel = 2*pi/1.81
     MaxSpeed = WhelAngVel*WhelR
+    Accel = MaxSpeed/0.44#time it takes to go 0 to max i 0.44 sec
     MaxTurnAngSpeed = 2*pi*TurnFreq
 
 
 
-    normalizingDistance = 0.0254 # in meters. Anything greater than this distance will warrant the maximum speed for traversal
+    normalizingDistance = 0.00254 # in meters. Anything greater than this distance will warrant the maximum speed for traversal
     normalizingAngle = pi/8 # in radians. Anything greater than this angle will warrant the maximum speed for angular change
     distTolerance = 0.0254 #distance at which it wont rotate or move forward anymore
 
@@ -48,6 +49,8 @@ class AIInterface:
        self._prevorientationAngle = 0
        self.firstRun = True
        self._prevTime = time.time()
+       self.Lprevspeed = 0
+       self.Rprevspeed = 0
        self.movementcontroller: MovementSystem.MovementController = MovementSystem.MovementController()
        self._prevMotorandAngOutput: SonnyMath.Coordinates =  SonnyMath.Coordinates(0,0)#Motor x. ang y
        self._angPID = PIDController.PIDController(0,0,self._dt,self.ang_kp,self.ang_ki,self.ang_kd)
@@ -60,7 +63,9 @@ class AIInterface:
         angPerc = self._prevMotorandAngOutput.Y/(self.pi/2)
         angvel = angPerc*self.MaxTurnAngSpeed
        # if(self._prevMotorandAngOutput.Y > )
-        vel = self._prevMotorandAngOutput.X*self.MaxSpeed
+        dvL = self._prevMotorandAngOutput.X*self.Accel*self._dt*math.cos(self._prevMotorandAngOutput.Y*2)
+        dvR = self._prevMotorandAngOutput.X*self.Accel*self._dt*-math.cos(self._prevMotorandAngOutput.Y*2)
+        
      #   print(f"Vel ----- {vel}")
         dx = 0
         dy = 0
@@ -126,7 +131,7 @@ class AIInterface:
             while done == False:
                 done = self.IterateController(path[0][0],path[0][1],0,path[i][0], path[i][1],refreshError,False,True)
                 if done:
-                    refreshError = True
+                    refreshError = False
                     print(f"Position reached moving to next position")
                 else:
                     refreshError = False

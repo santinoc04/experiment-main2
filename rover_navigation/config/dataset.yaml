@@ -21,11 +21,11 @@ paths:
   # Scan input: file (csv/ply) or numpy arrays on disk — see scan_mode below.
   # this is if using the ply:
   # test_file: "rover_navigation/data/raw/pos1_2box.ply"
-  test_file: "rover_navigation/data/raw/BigObstacles_pos3_High.csv"
+  test_file: "rover_navigation/data/raw/xyz.csv"
   # scan_mode: file     -> use test_file (single csv/ply or directory of scans)
   # scan_mode: numpy    -> use numpy_scan or numpy_scan_dir (.npy / .npz with xyz or points)
   # scan_mode: function -> call paths.function_provider each cycle to get an (N,3) numpy array
-  scan_mode: function
+  scan_mode: funcion
   # When test_file is a directory, which files to include (default: csv only for backward compat)
   scan_glob: "*.csv"
   # numpy_mode examples (set scan_mode: numpy):
