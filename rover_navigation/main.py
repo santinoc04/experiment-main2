@@ -331,6 +331,14 @@ def main() -> None:
             # provider callable returns one (N,3) xyz array per planning cycle.
             xyz = oI.denseScan()
             points_sensor, _true_labels, pred_labels = run_inference_from_xyz(xyz)
+            Rz_90 = np.array([
+                    [0, 1, 0],
+                    [-1,  0, 0],
+                    [0,  0, 1]
+                ])
+
+            points_sensor = points_sensor @ Rz_90.T
+             
         else:
             raise RuntimeError(f"Unknown scan kind: {scan_kind}")
 
