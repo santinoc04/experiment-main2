@@ -61,13 +61,136 @@ class AIInterface:
 
     def _GuessPosition(self, RoverisOrigin: bool):
         angPerc = self._prevMotorandAngOutput.Y/(self.pi/2)
+        
         angvel = angPerc*self.MaxTurnAngSpeed
+        
        # if(self._prevMotorandAngOutput.Y > )
         vel = self._prevMotorandAngOutput.X*self.MaxSpeed
-        dvL = self._prevMotorandAngOutput.X*self.Accel*self._dt*math.cos(self._prevMotorandAngOutput.Y*2)
-        dvR = self._prevMotorandAngOutput.X*self.Accel*self._dt*-math.cos(self._prevMotorandAngOutput.Y*2)
         
-     #   print(f"Vel ----- {vel}")
+        power = self._prevMotorandAngOutput.X
+        steer = self._prevMotorandAngOutput.Y
+
+        # Map steer to left/right multipliers (same idea you had before)
+        forward = math.cos(steer)
+        turn    = math.sin(steer)
+
+        leftMul  = forward + turn
+        rightMul = forward - turn
+
+        maxMul = max(abs(leftMul), abs(rightMul))
+        if maxMul > 1:
+            leftMul  /= maxMul
+            rightMul /= maxMul
+
+        # Previous wheel speeds
+        velL = self.Lprevspeed
+        velR = self.Rprevspeed
+
+        # Apply acceleration over this dt
+        dvL = power * self.Accel * self._dt * leftMul
+        dvR = power * self.Accel * self._dt * rightMul
+
+        velL += dvL
+        velR += dvR
+
+        # Clamp to MaxSpeed
+        velL = max(-self.MaxSpeed, min(self.MaxSpeed, velL))
+        velR = max(-self.MaxSpeed, min(self.MaxSpeed, velR))
+
+        # Store for next loop
+        self.Lprevspeed = velL
+        self.Rprevspeed = velR
+
+        # Normalized turning factor from actual wheel speeds
+        turnFactor = (velL - velR) / (2 * self.MaxSpeed)
+
+        angvel = turnFactor * self.MaxTurnAngSpeed
+        if abs((velL - velR)) < self.MaxTurnAngSpeed/2:
+            angvel = 0
+        vel    = (velL + velR) / 2
+
+        
+
+        #new angvel calculation
+        #angvel = self.Rprevspeed-self.Lprevspeed
+
+        #do integration from 0 to self.dt using a deltat of ___ to find new position
+        # delt = self._dt
+        # elt = 0
+        # x = self._goalCoords.X
+        # y = self._goalCoords.Y
+        # ang = self._prevorientationAngle
+        # velL = self.Lprevspeed
+        # velR = self.Rprevspeed
+        
+
+
+        # power = self._prevMotorandAngOutput.X
+        # steer = self._prevMotorandAngOutput.Y
+
+        # forward = math.cos(steer)
+        # turn    = math.sin(steer)
+
+        # leftMul  = forward + turn
+        # rightMul = forward - turn
+
+        # # Normalize so max magnitude = 1
+        # maxMul = max(abs(leftMul), abs(rightMul))
+        # if maxMul > 1:
+        #     leftMul  /= maxMul
+        #     rightMul /= maxMul
+
+        # dvL = power * self.Accel * delt * leftMul
+        # dvR = power * self.Accel * delt * rightMul
+       
+        # velL = velL+dvL
+        # velR = velR+dvR
+
+        # if(velL > self.MaxSpeed):
+        #     velL = self.MaxSpeed
+        # if(velL < -self.MaxSpeed):
+        #     velL = -self.MaxSpeed
+        # if(velR > self.MaxSpeed):
+        #     velR = self.MaxSpeed
+        # if(velR < -self.MaxSpeed):
+        #     velR = -self.MaxSpeed
+
+        # dang = (velL-velR)/(self.MaxSpeed*2)*self.MaxTurnAngSpeed*delt
+
+        # vel = (velL+velR)/2
+        
+
+        # dy = vel*delt
+        # dx = 0
+        # x = -(dx*math.cos(-ang) + dy*math.sin(-ang)) + x
+        # y = -(-dx*math.sin(-ang) + dy*math.cos(-ang))+ y
+        # ang = ang +dang
+        # while elt <self._dt:
+
+        #     dvL = self._prevMotorandAngOutput.X*self.Accel*delt*math.cos(self._prevMotorandAngOutput.Y*2)
+        #     dvR = self._prevMotorandAngOutput.X*self.Accel*delt*-math.cos(self._prevMotorandAngOutput.Y*2)
+        #     dang = (self.Rprevspeed-self.Lprevspeed)*delt
+        #     velL = velL+dvL
+        #     velR = velR+dvR
+
+        #     vel = (velL+velR)/2
+            
+
+        #     dy = vel*delt
+        #     dx = 0
+        #     x = -(dx*math.cos(-ang) + dy*math.sin(-ang)) + x
+        #     y = -(-dx*math.sin(-ang) + dy*math.cos(-ang))+ y
+        #     ang = ang +dang
+
+        #     elt = elt+delt
+            #print(f"dvl {dvL} dvr {dvR} dang {dang} vell {velL} velr {velR} vel {vel} dy {dy} x {x} y {y} {ang}")
+        # gang = ang
+        # gpos = SonnyMath.Coordinates(x,y) 
+        # self.Lprevspeed = velL
+        # self.Rprevspeed = velR
+        #end new driving
+        
+        print(f"Vel ----- {vel} angvel {angvel}")
         dx = 0
         dy = 0
         theta =0
@@ -121,6 +244,7 @@ class AIInterface:
     def _CalculateDt(self):
         t = time.time()
         self._dt = t-self._prevTime
+        self._dt = self._dt/2
         self._prevTime = t
     def FollowPath(self, path,sleep):
         i = 1
@@ -136,6 +260,12 @@ class AIInterface:
                     print(f"Position reached moving to next position")
                 else:
                     refreshError = False
+                time.sleep(sleep)
+                outputCoords: SonnyMath.Coordinates = SonnyMath.Coordinates(0,0)
+      #  print(f"output coords x {outputCoords.X}, Y {outputCoords.Y}")
+        
+        
+                self._prevMotorandAngOutput = self.movementcontroller.ParseInput(outputCoords)
                 time.sleep(sleep)
             done = False
             i = i+1
@@ -180,6 +310,15 @@ class AIInterface:
 # for error
         errDistance, errVecAngle, errQuad,errdvec = self._CalculateDeltas(gpos,self._currentCoords)
         errAngle = errVecAngle-self._prevorientationAngle
+        
+        egVectorRot = errdvec.RotateByAngle(-currentAng)
+
+        enewVectorAngle = egVectorRot.GetAngle()
+        if(egVectorRot.X>0):
+            enewVectorAngle = -newVectorAngle
+        eDAngle = errVecAngle - currentAng
+        eDAngle = SonnyMath.SonnyMath.limitAngle(eDAngle)
+        
 
         errsign = errQuad.X
         erraut = errsign*self._errangPID.IterPID(errAngle,0.0)
@@ -200,11 +339,11 @@ class AIInterface:
        # sign = Quad.X
 
         #aut = self._angPID.IterPID(currentAng,VectorAngle)+erraut
-        aut = -self._angPID.IterPID(DAngle,0)#+erraut#this version keeps the current angle as 0
+        aut = -self._angPID.IterPID(DAngle,0)+erraut#this version keeps the current angle as 0
        #negative because we're switching D angle and 0 so that the error doesn't build up from current angle not updating
        
        # aut = VectorAngle - currentAng+erraut
-    #    print(f" Dist,  Angle, Current angle Dangle{Distance,VectorAngle,currentAng,DAngle}")
+       # print(f" Dist,  Angle, Current angle Dangle{Distance,VectorAngle,currentAng,DAngle}")
         dut = self._distPID.IterPID(0,Distance)+errdut
         if Distance < self.distTolerance:
             dut = 0
@@ -227,7 +366,7 @@ class AIInterface:
         xvarperc = round(percdut)
         #yvarprc = round(percaut*2)/2# half turn
         yvarprc = round(percaut)# no half turn
-      #  print(f"Yvarperc {yvarprc}, percaut {percaut}")#autosave test
+        print(f"Yvarperc {yvarprc}, percaut {percaut}")#autosave test
     ###################
         mag = xvarperc
         ang = self.pi/2*yvarprc

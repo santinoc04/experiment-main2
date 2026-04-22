@@ -47,29 +47,27 @@ class OccupancyMap:
     def in_bounds(self, cell) -> bool:
         """
         check if the cell is within the map boundaries
-        :param cell: cell position to check (x,y)
+        :param cell: cell position to check (row, col)
         :return: true if within, false if outside
         """
-        (x,y) = cell 
-        return 0 <= x < self.x_dim and 0 <= y < self.y_dim
+        (row, col) = cell
+        return 0 <= row < self.y_dim and 0 <= col < self.x_dim
     
     pos = tuple[int, int]
 
     def is_unoccupied(self, pos) -> bool:
         """
         check if a cell is unoccupied
-        :param pos: cell position to check (x,y)
+        :param pos: cell position to check (row, col)
         :return: true if the cell is unoccupied, false if the cell is occupied
         """
-        (x,y) = (round(pos[0]), round(pos[1])) # round to the closest (x,y) pos
-
-        (row,col) = (y,x)
+        (row, col) = (round(pos[0]), round(pos[1]))
 
         # check if the cell is out of bounds
-        if not self.in_bounds(cell=(x,y)):
+        if not self.in_bounds(cell=(row, col)):
             raise IndexError("Map index out of bounds")
         
-        return self.occupancy_map[row][col] == UNOCCUPIED
+        return self.occupancy_map[row, col] == UNOCCUPIED
     
     def filter(self, neighbors: List, avoid_obstacles: bool):
         """
@@ -91,210 +89,135 @@ class OccupancyMap:
         :param avoid_obstacles: if true, filter out occupied cells
         :return: list of successors
         """
-        (x,y) = vertex
-        # (row,col) = vertex
+        (row, col) = vertex
 
         if self.movement_setting == '4N':
             # move up, down, left, right
-            movements = get_movements_4n(x =x, y=y)
-            # movements = get_movements_4n(x = row, y=col)
+            movements = get_movements_4n(x=row, y=col)
         else: 
-            movements = get_movements_8n(x=x, y=y)
+            movements = get_movements_8n(x=row, y=col)
             # move up, down, left, right, and diagonals
 
-        if (x+y) % 2 == 0: 
+        if (row + col) % 2 == 0:
             movements.reverse()
-        # if (row + col) % 2 ==0:
-        #     movements.reverse()
 
         filtered_movements = self.filter(neighbors = movements, avoid_obstacles=avoid_obstacles) # filter out movements that cause out of bounds and occupied cells
         return list(filtered_movements)
     
     def is_edge_free(self,u:tuple[int,int],v:tuple[int,int])->bool:
-        (x0,y0) = u
-        (x1,y1) = v
+        (row0, col0) = u
+        (row1, col1) = v
 
-        dx = abs(x1-x0)
-        dy = abs(y1-y0)
+        d_row = abs(row1 - row0)
+        d_col = abs(col1 - col0)
 
-        x,y = x0,y0
+        row, col = row0, col0
 
-        sx=1 if x1 > x0 else -1
-        sy = 1 if y1 > y0 else -1
+        s_row = 1 if row1 > row0 else -1
+        s_col = 1 if col1 > col0 else -1
         
-        if dx > dy:
-            err = dx/2.0
-            while x != x1:
-                if not self.in_bounds((x,y)) or not self.is_unoccupied((x,y)):
+        if d_row > d_col:
+            err = d_row / 2.0
+            while row != row1:
+                if not self.in_bounds((row, col)) or not self.is_unoccupied((row, col)):
                     return False
-                err -= dy
-                if err <0:
-                    y+=sy
-                    err+=dx
-                x+=sx
+                err -= d_col
+                if err < 0:
+                    col += s_col
+                    err += d_row
+                row += s_row
 
         else:
-            err = dy / 2.0
-            while y != y1:
-                if not self.in_bounds((x,y)) or not self.is_unoccupied((x,y)):
+            err = d_col / 2.0
+            while col != col1:
+                if not self.in_bounds((row, col)) or not self.is_unoccupied((row, col)):
                     return False
-                err -= dx
-                if err <0:
-                    x+=sx
-                    err+=dy
-                y+=sy
+                err -= d_row
+                if err < 0:
+                    row += s_row
+                    err += d_col
+                col += s_col
         return True
                      
     def set_obstacles(self, pos):
         """
-        :param pos: cell position to set as an obstacle (x,y)
+        :param pos: cell position to set as an obstacle (row, col)
         :return: None
         """
-        (x,y) = round(pos[0]), round(pos[1]) # round to nearest match
-        (row, col) = (y,x)
-
-        self.occupancy_map[row][col] = OBSTACLE # set cell as an obstacle
+        (row, col) = round(pos[0]), round(pos[1])
+        self.occupancy_map[row, col] = OBSTACLE # set cell as an obstacle
 
     def remove_obstacle(self, pos):
         """
-        :param pos: cell position to set as an obstacle (x,y)
+        :param pos: cell position to set as an obstacle (row, col)
         :return: None
         """
-        (x,y) = round(pos[0]), round(pos[1]) # round to nearest match
-        (row, col) = (y,x)
-
-        # (row, col)= round(pos[0],pos[1])
-
-        self.occupancy_map[row][col] = UNOCCUPIED # set cell as unoccupied
+        (row, col) = round(pos[0]), round(pos[1])
+        self.occupancy_map[row, col] = UNOCCUPIED # set cell as unoccupied
 
     def observations(self, global_pos: cell, view_range: int = 2) -> Dict:
         """
-        :param global_pos: current global position of system (x,y)
+        :param global_pos: current global position of system (row, col)
         :param view_range: how far can the system see in each direction
-        :return: dictionary of observations [(x,y): occupancy val]
+        :return: dictionary of observations [(row,col): occupancy val]
         """
-        (px,py) = global_pos
+        (p_row, p_col) = global_pos
 
-        nodes = [(x, y) for x in range(px - view_range, px + view_range + 1)
-                 for y in range(py - view_range, py + view_range + 1)
-                 if self.in_bounds((x, y))]
+        nodes = [(row, col) for row in range(p_row - view_range, p_row + view_range + 1)
+                 for col in range(p_col - view_range, p_col + view_range + 1)
+                 if self.in_bounds((row, col))]
 
         return {node: UNOCCUPIED if self.is_unoccupied(pos=node) else OBSTACLE for node in nodes}
-    # def inflate(self, radius: int = 2):
-    #     """
-    #     Inflate obstacles to account for rover size / safety margin
-    #     :param radius: number of grid cells to expand obstacles
-    #     """
-    #     grid = self.occupancy_map
-    #     h, w = grid.shape
+    def inflate(self, radius: int = 1):
+        """
+        Inflate obstacles to account for rover size / safety margin.
+        After inflation, seals diagonal gaps where two obstacle cells touch
+        only at corners — the rover physically can't fit through these.
+        :param radius: number of grid cells to expand obstacles
+        """
+        grid = self.occupancy_map
+        h, w = grid.shape
 
-    #     new_grid = grid.copy()
+        new_grid = grid.copy()
 
-    #     obstacle_cells = np.argwhere(grid == OBSTACLE)
+        obstacle_cells = np.argwhere(grid == OBSTACLE)
 
-    #     for row, col in obstacle_cells:
-    #         for dr in range(-radius, radius + 1):
-    #             for dc in range(-radius, radius + 1):
-    #                 rr = row + dr
-    #                 cc = col + dc
+        for row, col in obstacle_cells:
+            for dr in range(-radius, radius + 1):
+                for dc in range(-radius, radius + 1):
+                    rr = row + dr
+                    cc = col + dc
 
-    #                 if 0 <= rr < h and 0 <= cc < w:
-    #                     new_grid[rr, cc] = OBSTACLE
+                    if 0 <= rr < h and 0 <= cc < w:
+                        new_grid[rr, cc] = OBSTACLE
 
-    #     self.occupancy_map = new_grid
-    def inflate(self, radius: int = 1): 
+        # Seal diagonal gaps: if two obstacle cells touch only at a corner
+        # (diagonally adjacent) with both shared orthogonal neighbors free,
+        # fill one of those neighbors to close the gap.
+        # This prevents the rover from cutting through diagonal pinch points.
+        sealed = True
+        while sealed:
+            sealed = False
+            for row in range(h - 1):
+                for col in range(w - 1):
+                    # Check top-left to bottom-right diagonal
+                    if (new_grid[row, col] == OBSTACLE and
+                        new_grid[row + 1, col + 1] == OBSTACLE and
+                        new_grid[row, col + 1] == UNOCCUPIED and
+                        new_grid[row + 1, col] == UNOCCUPIED):
+                        new_grid[row, col + 1] = OBSTACLE
+                        sealed = True
+                    # Check top-right to bottom-left diagonal
+                    if (new_grid[row, col + 1] == OBSTACLE and
+                        new_grid[row + 1, col] == OBSTACLE and
+                        new_grid[row, col] == UNOCCUPIED and
+                        new_grid[row + 1, col + 1] == UNOCCUPIED):
+                        new_grid[row + 1, col + 1] = OBSTACLE
+                        sealed = True
 
-    # """ 
-
-    # Inflate obstacles to account for rover size / safety margin. 
-
-    # After inflation, seals diagonal gaps where two obstacle cells touch 
-
-    # only at corners — the rover physically can't fit through these. 
-
-    # :param radius: number of grid cells to expand obstacles 
-
-    # """ 
-
-        grid = self.occupancy_map 
-
-        h, w = grid.shape 
-
+        self.occupancy_map = new_grid
     
-
-        new_grid = grid.copy() 
-
     
-
-        obstacle_cells = np.argwhere(grid == OBSTACLE) 
-
-    
-
-        # Standard inflation 
-
-        for row, col in obstacle_cells: 
-
-            for dr in range(-radius, radius + 1): 
-
-                for dc in range(-radius, radius + 1): 
-
-                    rr = row + dr 
-
-                    cc = col + dc 
-
-    
-
-                    if 0 <= rr < h and 0 <= cc < w: 
-
-                        new_grid[rr, cc] = OBSTACLE 
-
-    
-
-        # NEW: Seal diagonal gaps 
-
-        sealed = True 
-
-        while sealed: 
-
-            sealed = False 
-
-            for row in range(h - 1): 
-
-                for col in range(w - 1): 
-
-                    # Top-left ↘ bottom-right diagonal 
-
-                    if (new_grid[row, col] == OBSTACLE and 
-
-                        new_grid[row + 1, col + 1] == OBSTACLE and 
-
-                        new_grid[row, col + 1] == UNOCCUPIED and 
-
-                        new_grid[row + 1, col] == UNOCCUPIED): 
-
-                        new_grid[row, col + 1] = OBSTACLE 
-
-                        sealed = True 
-
-    
-
-                    # Top-right ↙ bottom-left diagonal 
-
-                    if (new_grid[row, col + 1] == OBSTACLE and 
-
-                        new_grid[row + 1, col] == OBSTACLE and 
-
-                        new_grid[row, col] == UNOCCUPIED and 
-
-                        new_grid[row + 1, col + 1] == UNOCCUPIED): 
-
-                        new_grid[row + 1, col + 1] = OBSTACLE 
-
-                        sealed = True 
-
-        self.occupancy_map = new_grid 
-
-
 class SLAM:
     def __init__(self, map: OccupancyMap, view_range: int):
         self.truth_map = map # true map of environment
@@ -438,7 +361,7 @@ def build_map_from_predictions(
 
         for (row, col), count in counts.items():
             if count >= 2:
-                omap.set_obstacles((col, row))
+                omap.set_obstacles((row, col))
 
         grid_info = {
             "resolution": grid_resolution,
@@ -527,118 +450,40 @@ def sensor_to_rover_local(
     return local_points.astype(np.float32, copy=False)
 
 
-# def transform_local_to_world(
-#     local_points: np.ndarray,
-#     rover_pose_xy: tuple[float, float],
-#     heading_rad: float,
-# ) -> np.ndarray:
-#     """
-#     Transform rover-local points into world/global frame.
+def transform_local_to_world(
+    local_points: np.ndarray,
+    rover_pose_xy: tuple[float, float],
+    heading_rad: float,
+) -> np.ndarray:
+    """
+    Transform rover-local points into world/global frame.
 
-#     Conventions:
-#       - rover local frame: +X right, +Y forward, +Z up
-#       - world frame: +X right, +Y forward, +Z up
-#       - heading_rad is rover yaw in radians, positive CCW in world XY
-#       - world origin is at the bottom-left of the square workspace
-#     """
-#     if local_points.ndim != 2 or local_points.shape[1] != 3:
-#         raise ValueError(f"Expected local_points shape (N, 3), got {local_points.shape}")
+    Conventions:
+      - rover local frame: +X right, +Y forward, +Z up
+      - world frame: +X right, +Y forward, +Z up
+      - heading_rad is rover yaw in radians, positive CCW in world XY
+      - world origin is at the bottom-left of the square workspace
+    """
+    if local_points.ndim != 2 or local_points.shape[1] != 3:
+        raise ValueError(f"Expected local_points shape (N, 3), got {local_points.shape}")
 
-#     # cos_h = np.cos(heading_rad)
-#     # sin_h = np.sin(heading_rad)
-#     # world_from_body = np.array(
-#     #     [
-#     #         [cos_h, sin_h, 0.0],
-#     #         [-sin_h, cos_h, 0.0],
-#     #         [0.0, 0.0, 1.0],
-#     #     ],
-#     #     dtype=np.float32,
-#     # )
+    cos_h = np.cos(heading_rad)
+    sin_h = np.sin(heading_rad)
+    world_from_body = np.array(
+        [
+            [cos_h, -sin_h, 0.0],
+            [sin_h, cos_h, 0.0],
+            [0.0, 0.0, 1.0],
+        ],
+        dtype=np.float32,
+    )
 
-#     # world_points = local_points @ world_from_body.T
-#     # world_points[:, 0] += rover_pose_xy[0]
-#     # world_points[:, 1] += rover_pose_xy[1]
-#     cos_h = np.cos(heading_rad)
-#     sin_h = np.sin(heading_rad)
-#     world_points = local_points.copy().astype(np.float32,copy=False)
-#     xlocal = local_points[:,0]
-#     ylocal = local_points[:,1]
-#     world_points[:,0]=xlocal*cos_h+ylocal*sin_h
-#     world_points[:,1] = -xlocal*sin_h+ylocal*cos_h
-#     world_points[:,0]+=rover_pose_xy[0]
-#     world_points[:,1]+=rover_pose_xy[1]
+    world_points = local_points @ world_from_body.T
+    world_points[:, 0] += rover_pose_xy[0]
+    world_points[:, 1] += rover_pose_xy[1]
+    return world_points.astype(np.float32, copy=False)
 
-#     return world_points.astype(np.float32, copy=False)
 
-def transform_local_to_world( 
-
-    local_points: np.ndarray, 
-
-    rover_pose_xy: tuple[float, float], 
-
-    heading_rad: float, 
-
-    ) -> np.ndarray: 
-
-    """ 
-
-    Transform rover-local points into world/global frame. 
-
-    
-
-    Conventions: 
-
-    - rover local frame: +X right, +Y forward, +Z up 
-
-    - world frame: +X right, +Y forward, +Z up 
-
-    - heading_rad is rover yaw in radians, positive CCW in world XY 
-
-    - world origin is at the bottom-left of the square workspace 
-
-    """ 
-
-    if local_points.ndim != 2 or local_points.shape[1] != 3: 
-
-        raise ValueError(f"Expected local_points shape (N, 3), got {local_points.shape}") 
-
-    
-
-    cos_h = np.cos(heading_rad) 
-
-    sin_h = np.sin(heading_rad) 
-
-    
-
-    # NEW: standard rotation matrix 
-
-    world_from_body = np.array( 
-
-    [ 
-
-    [cos_h, -sin_h, 0.0], 
-
-    [sin_h, cos_h, 0.0], 
-
-    [0.0, 0.0, 1.0], 
-
-    ], 
-
-    dtype=np.float32, 
-
-    ) 
-
-    
-
-    world_points = local_points @ world_from_body.T 
-
-    world_points[:, 0] += rover_pose_xy[0] 
-
-    world_points[:, 1] += rover_pose_xy[1] 
-
-    
-
-    return world_points.astype(np.float32, copy=False) 
 def transform_to_world(
     points: np.ndarray,
     rover_pose_xy: tuple[float, float],

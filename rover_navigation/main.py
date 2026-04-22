@@ -425,7 +425,7 @@ def main() -> None:
         
         
         pathmeters.insert(0,rover_pose_xy) # add current rover pos to start of path
-        AII.FollowPath(pathmeters,0.2) # send path to AI interface, speed 0.2 m/s
+        AII.FollowPath(pathmeters,.5) # send path to AI interface, speed 0.2 m/s
         final_path = path # store final path
 
         if debug_sender is not None:
