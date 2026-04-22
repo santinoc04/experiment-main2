@@ -63,6 +63,7 @@ class AIInterface:
         angPerc = self._prevMotorandAngOutput.Y/(self.pi/2)
         angvel = angPerc*self.MaxTurnAngSpeed
        # if(self._prevMotorandAngOutput.Y > )
+        vel = self._prevMotorandAngOutput.X*self.MaxSpeed
         dvL = self._prevMotorandAngOutput.X*self.Accel*self._dt*math.cos(self._prevMotorandAngOutput.Y*2)
         dvR = self._prevMotorandAngOutput.X*self.Accel*self._dt*-math.cos(self._prevMotorandAngOutput.Y*2)
         

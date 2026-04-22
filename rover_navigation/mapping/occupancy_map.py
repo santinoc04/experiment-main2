@@ -180,29 +180,121 @@ class OccupancyMap:
                  if self.in_bounds((x, y))]
 
         return {node: UNOCCUPIED if self.is_unoccupied(pos=node) else OBSTACLE for node in nodes}
-    def inflate(self, radius: int = 2):
-        """
-        Inflate obstacles to account for rover size / safety margin
-        :param radius: number of grid cells to expand obstacles
-        """
-        grid = self.occupancy_map
-        h, w = grid.shape
+    # def inflate(self, radius: int = 2):
+    #     """
+    #     Inflate obstacles to account for rover size / safety margin
+    #     :param radius: number of grid cells to expand obstacles
+    #     """
+    #     grid = self.occupancy_map
+    #     h, w = grid.shape
 
-        new_grid = grid.copy()
+    #     new_grid = grid.copy()
 
-        obstacle_cells = np.argwhere(grid == OBSTACLE)
+    #     obstacle_cells = np.argwhere(grid == OBSTACLE)
 
-        for row, col in obstacle_cells:
-            for dr in range(-radius, radius + 1):
-                for dc in range(-radius, radius + 1):
-                    rr = row + dr
-                    cc = col + dc
+    #     for row, col in obstacle_cells:
+    #         for dr in range(-radius, radius + 1):
+    #             for dc in range(-radius, radius + 1):
+    #                 rr = row + dr
+    #                 cc = col + dc
 
-                    if 0 <= rr < h and 0 <= cc < w:
-                        new_grid[rr, cc] = OBSTACLE
+    #                 if 0 <= rr < h and 0 <= cc < w:
+    #                     new_grid[rr, cc] = OBSTACLE
 
-        self.occupancy_map = new_grid
+    #     self.occupancy_map = new_grid
+    def inflate(self, radius: int = 1): 
+
+    # """ 
+
+    # Inflate obstacles to account for rover size / safety margin. 
+
+    # After inflation, seals diagonal gaps where two obstacle cells touch 
+
+    # only at corners — the rover physically can't fit through these. 
+
+    # :param radius: number of grid cells to expand obstacles 
+
+    # """ 
+
+        grid = self.occupancy_map 
+
+        h, w = grid.shape 
+
     
+
+        new_grid = grid.copy() 
+
+    
+
+        obstacle_cells = np.argwhere(grid == OBSTACLE) 
+
+    
+
+        # Standard inflation 
+
+        for row, col in obstacle_cells: 
+
+            for dr in range(-radius, radius + 1): 
+
+                for dc in range(-radius, radius + 1): 
+
+                    rr = row + dr 
+
+                    cc = col + dc 
+
+    
+
+                    if 0 <= rr < h and 0 <= cc < w: 
+
+                        new_grid[rr, cc] = OBSTACLE 
+
+    
+
+        # NEW: Seal diagonal gaps 
+
+        sealed = True 
+
+        while sealed: 
+
+            sealed = False 
+
+            for row in range(h - 1): 
+
+                for col in range(w - 1): 
+
+                    # Top-left ↘ bottom-right diagonal 
+
+                    if (new_grid[row, col] == OBSTACLE and 
+
+                        new_grid[row + 1, col + 1] == OBSTACLE and 
+
+                        new_grid[row, col + 1] == UNOCCUPIED and 
+
+                        new_grid[row + 1, col] == UNOCCUPIED): 
+
+                        new_grid[row, col + 1] = OBSTACLE 
+
+                        sealed = True 
+
+    
+
+                    # Top-right ↙ bottom-left diagonal 
+
+                    if (new_grid[row, col + 1] == OBSTACLE and 
+
+                        new_grid[row + 1, col] == OBSTACLE and 
+
+                        new_grid[row, col] == UNOCCUPIED and 
+
+                        new_grid[row + 1, col + 1] == UNOCCUPIED): 
+
+                        new_grid[row + 1, col + 1] = OBSTACLE 
+
+                        sealed = True 
+
+        self.occupancy_map = new_grid 
+
+
 class SLAM:
     def __init__(self, map: OccupancyMap, view_range: int):
         self.truth_map = map # true map of environment
@@ -435,50 +527,118 @@ def sensor_to_rover_local(
     return local_points.astype(np.float32, copy=False)
 
 
-def transform_local_to_world(
-    local_points: np.ndarray,
-    rover_pose_xy: tuple[float, float],
-    heading_rad: float,
-) -> np.ndarray:
-    """
-    Transform rover-local points into world/global frame.
+# def transform_local_to_world(
+#     local_points: np.ndarray,
+#     rover_pose_xy: tuple[float, float],
+#     heading_rad: float,
+# ) -> np.ndarray:
+#     """
+#     Transform rover-local points into world/global frame.
 
-    Conventions:
-      - rover local frame: +X right, +Y forward, +Z up
-      - world frame: +X right, +Y forward, +Z up
-      - heading_rad is rover yaw in radians, positive CCW in world XY
-      - world origin is at the bottom-left of the square workspace
-    """
-    if local_points.ndim != 2 or local_points.shape[1] != 3:
-        raise ValueError(f"Expected local_points shape (N, 3), got {local_points.shape}")
+#     Conventions:
+#       - rover local frame: +X right, +Y forward, +Z up
+#       - world frame: +X right, +Y forward, +Z up
+#       - heading_rad is rover yaw in radians, positive CCW in world XY
+#       - world origin is at the bottom-left of the square workspace
+#     """
+#     if local_points.ndim != 2 or local_points.shape[1] != 3:
+#         raise ValueError(f"Expected local_points shape (N, 3), got {local_points.shape}")
 
-    # cos_h = np.cos(heading_rad)
-    # sin_h = np.sin(heading_rad)
-    # world_from_body = np.array(
-    #     [
-    #         [cos_h, sin_h, 0.0],
-    #         [-sin_h, cos_h, 0.0],
-    #         [0.0, 0.0, 1.0],
-    #     ],
-    #     dtype=np.float32,
-    # )
+#     # cos_h = np.cos(heading_rad)
+#     # sin_h = np.sin(heading_rad)
+#     # world_from_body = np.array(
+#     #     [
+#     #         [cos_h, sin_h, 0.0],
+#     #         [-sin_h, cos_h, 0.0],
+#     #         [0.0, 0.0, 1.0],
+#     #     ],
+#     #     dtype=np.float32,
+#     # )
 
-    # world_points = local_points @ world_from_body.T
-    # world_points[:, 0] += rover_pose_xy[0]
-    # world_points[:, 1] += rover_pose_xy[1]
-    cos_h = np.cos(heading_rad)
-    sin_h = np.sin(heading_rad)
-    world_points = local_points.copy().astype(np.float32,copy=False)
-    xlocal = local_points[:,0]
-    ylocal = local_points[:,1]
-    world_points[:,0]=xlocal*cos_h+ylocal*sin_h
-    world_points[:,1] = -xlocal*sin_h+ylocal*cos_h
-    world_points[:,0]+=rover_pose_xy[0]
-    world_points[:,1]+=rover_pose_xy[1]
+#     # world_points = local_points @ world_from_body.T
+#     # world_points[:, 0] += rover_pose_xy[0]
+#     # world_points[:, 1] += rover_pose_xy[1]
+#     cos_h = np.cos(heading_rad)
+#     sin_h = np.sin(heading_rad)
+#     world_points = local_points.copy().astype(np.float32,copy=False)
+#     xlocal = local_points[:,0]
+#     ylocal = local_points[:,1]
+#     world_points[:,0]=xlocal*cos_h+ylocal*sin_h
+#     world_points[:,1] = -xlocal*sin_h+ylocal*cos_h
+#     world_points[:,0]+=rover_pose_xy[0]
+#     world_points[:,1]+=rover_pose_xy[1]
 
-    return world_points.astype(np.float32, copy=False)
+#     return world_points.astype(np.float32, copy=False)
 
+def transform_local_to_world( 
 
+    local_points: np.ndarray, 
+
+    rover_pose_xy: tuple[float, float], 
+
+    heading_rad: float, 
+
+    ) -> np.ndarray: 
+
+    """ 
+
+    Transform rover-local points into world/global frame. 
+
+    
+
+    Conventions: 
+
+    - rover local frame: +X right, +Y forward, +Z up 
+
+    - world frame: +X right, +Y forward, +Z up 
+
+    - heading_rad is rover yaw in radians, positive CCW in world XY 
+
+    - world origin is at the bottom-left of the square workspace 
+
+    """ 
+
+    if local_points.ndim != 2 or local_points.shape[1] != 3: 
+
+        raise ValueError(f"Expected local_points shape (N, 3), got {local_points.shape}") 
+
+    
+
+    cos_h = np.cos(heading_rad) 
+
+    sin_h = np.sin(heading_rad) 
+
+    
+
+    # NEW: standard rotation matrix 
+
+    world_from_body = np.array( 
+
+    [ 
+
+    [cos_h, -sin_h, 0.0], 
+
+    [sin_h, cos_h, 0.0], 
+
+    [0.0, 0.0, 1.0], 
+
+    ], 
+
+    dtype=np.float32, 
+
+    ) 
+
+    
+
+    world_points = local_points @ world_from_body.T 
+
+    world_points[:, 0] += rover_pose_xy[0] 
+
+    world_points[:, 1] += rover_pose_xy[1] 
+
+    
+
+    return world_points.astype(np.float32, copy=False) 
 def transform_to_world(
     points: np.ndarray,
     rover_pose_xy: tuple[float, float],
