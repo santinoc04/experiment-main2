@@ -249,15 +249,16 @@ def move_batch_to_device(batch: dict, device: torch.device) -> dict:
         else:
             moved[key] = value.to(device)
     return moved
-
-
 def _run_inference_from_batch(
     batch: dict,
     vis_points: np.ndarray,
     model_path: str | Path,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Load weights, run forward pass, return vis_points, true_labels, pred_labels."""
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # Force CPU to avoid Conv1d GPU kernel failure on JetPack 6.2.1
+    device = torch.device("cpu")
+
     true_labels = batch["labels"].squeeze(0).cpu().numpy()
 
     model = RandLANet(
@@ -276,7 +277,9 @@ def _run_inference_from_batch(
     model.load_state_dict(state_dict)
     model.eval()
 
-    batch = move_batch_to_device(batch, device)
+    # Move batch to CPU
+    batch = move_batch_to_device(batch, "cpu")
+    model = model.cpu()
 
     with torch.no_grad():
         logits = model(batch)
@@ -284,6 +287,41 @@ def _run_inference_from_batch(
 
     pred = pred.squeeze(0).cpu().numpy()
     return vis_points, true_labels, pred
+
+
+# def _run_inference_from_batch(
+#     batch: dict,
+#     vis_points: np.ndarray,
+#     model_path: str | Path,
+# ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+#     """Load weights, run forward pass, return vis_points, true_labels, pred_labels."""
+#     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#     true_labels = batch["labels"].squeeze(0).cpu().numpy()
+
+#     model = RandLANet(
+#         dataset_config_path=DATASET_CONFIG,
+#         training_config_path=TRAINING_CONFIG,
+#     ).to(device)
+
+#     model_path = Path(model_path)
+#     if not model_path.exists():
+#         raise FileNotFoundError(
+#             f"Model checkpoint not found: {model_path}. "
+#             f"Train the model first or pass the correct checkpoint path."
+#         )
+
+#     state_dict = torch.load(model_path, map_location=device)
+#     model.load_state_dict(state_dict)
+#     model.eval()
+
+#     batch = move_batch_to_device(batch, device)
+
+#     with torch.no_grad():
+#         logits = model(batch)
+#         pred = torch.argmax(logits, dim=-1)
+
+#     pred = pred.squeeze(0).cpu().numpy()
+#     return vis_points, true_labels, pred
 
 
 # function to run inference on a ply file using the trained model

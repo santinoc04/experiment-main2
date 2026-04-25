@@ -3,6 +3,7 @@ import rover_navigation.SonnyMath as SonnyMath
 import math
 import rover_navigation.MovementSystem as MovementSystem
 import time
+#import rover_navigation.IMUInterface as IMUInterface
 
 class AIInterface:
     #CONSTANTS
@@ -57,7 +58,7 @@ class AIInterface:
        self._distPID = PIDController.PIDController(0,0,self._dt,self.dist_kp,self.dist_ki,self.dist_kd)
        self._errangPID = PIDController.PIDController(0,0,self._dt,self.errang_kp,self.errang_ki,self.errang_kd)
        self._errdistPID = PIDController.PIDController(0,0,self._dt,self.errdist_kp,self.errdist_ki,self.errdist_kd)
-       
+      # self.IMUI = 
 
     def _GuessPosition(self, RoverisOrigin: bool):
         angPerc = self._prevMotorandAngOutput.Y/(self.pi/2)
@@ -244,7 +245,7 @@ class AIInterface:
     def _CalculateDt(self):
         t = time.time()
         self._dt = t-self._prevTime
-        self._dt = self._dt/2
+        self._dt = self._dt
         self._prevTime = t
     def FollowPath(self, path,sleep):
         i = 1
@@ -252,6 +253,7 @@ class AIInterface:
         done = False
         print(f"{path}")
         while i < len(path):
+
             print(f"Next position x: {path[i][0]} y: {path[i][1]}")
             while done == False:
                 done = self.IterateController(path[0][0],path[0][1],0,path[i][0], path[i][1],refreshError,False,True)
@@ -266,7 +268,6 @@ class AIInterface:
         
         
                 self._prevMotorandAngOutput = self.movementcontroller.ParseInput(outputCoords)
-                time.sleep(sleep)
             done = False
             i = i+1
     def GetCurrentHeading(self) -> float:
