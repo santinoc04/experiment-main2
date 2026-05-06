@@ -1,0 +1,22 @@
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# pytest
+.pytest_cache/
+
+# training outputs
+# checkpoints/
+
+# processed data
+data/processed/
+
+# raw data
+data/raw/
+
+# OS files
+.DS_Store
+Thumbs.db
